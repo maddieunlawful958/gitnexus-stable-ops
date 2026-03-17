@@ -48,7 +48,11 @@ _ensure_no_lock() {
   local lock_holder="" db_path=""
   db_path=$(_db_lock_path || true)
   if [[ -n "$db_path" ]]; then
-    lock_holder=$(fuser "$db_path" 2>/dev/null || true)
+    if command -v fuser >/dev/null 2>&1; then
+      lock_holder=$(fuser "$db_path" 2>/dev/null || true)
+    elif command -v lsof >/dev/null 2>&1; then
+      lock_holder=$(lsof "$db_path" 2>/dev/null | awk 'NR>1{print $2}' | head -1 || true)
+    fi
   fi
   if [[ -n "$lock_holder" ]]; then
     _warn "DB lock detected: $lock_holder"
