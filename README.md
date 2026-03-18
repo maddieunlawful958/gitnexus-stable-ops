@@ -1,5 +1,9 @@
 # 🔧 gitnexus-stable-ops
 
+![Stars](https://img.shields.io/github/stars/ShunsukeHayashi/gitnexus-stable-ops?style=for-the-badge&color=yellow)
+![License](https://img.shields.io/github/license/ShunsukeHayashi/gitnexus-stable-ops?style=for-the-badge)
+![Last Commit](https://img.shields.io/github/last-commit/ShunsukeHayashi/gitnexus-stable-ops?style=for-the-badge)
+
 **Operational toolkit for running [GitNexus](https://github.com/abhigyanpatwari/GitNexus) with a pinned, stable CLI/MCP workflow.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
