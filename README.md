@@ -3,6 +3,9 @@
 **Operational toolkit for running [GitNexus](https://github.com/nicholasgasior/gitnexus) with a pinned, stable CLI/MCP workflow.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub Stars](https://img.shields.io/github/stars/ShunsukeHayashi/gitnexus-stable-ops?style=social)](https://github.com/ShunsukeHayashi/gitnexus-stable-ops)
+[![GitHub Issues](https://img.shields.io/github/issues/ShunsukeHayashi/gitnexus-stable-ops)](https://github.com/ShunsukeHayashi/gitnexus-stable-ops/issues)
+[![Last Commit](https://img.shields.io/github/last-commit/ShunsukeHayashi/gitnexus-stable-ops)](https://github.com/ShunsukeHayashi/gitnexus-stable-ops/commits/main)
 
 Built by [合同会社みやび (LLC Miyabi)](https://miyabi-ai.jp) — Managing 25+ repositories indexed with GitNexus in production.
 
@@ -37,11 +40,35 @@ This toolkit solves all four.
 - `bash`, `git`, `jq`, `python3`
 - `gitnexus` CLI installed (default: `~/.local/bin/gitnexus-stable`)
 
-## Quick Start
+## Installation
+
+### One-liner (recommended)
 
 ```bash
 git clone https://github.com/ShunsukeHayashi/gitnexus-stable-ops.git
 cd gitnexus-stable-ops
+make install
+```
+
+This will:
+- Symlink `bin/gni` to `~/.local/bin/gni`
+- Make all scripts executable
+- Ensure `~/.local/bin` is in your PATH
+
+### Manual
+
+```bash
+git clone https://github.com/ShunsukeHayashi/gitnexus-stable-ops.git
+cd gitnexus-stable-ops
+ln -s $(PWD)/bin/gni ~/.local/bin/gni
+chmod +x bin/*
+```
+
+## Quick Start
+
+```bash
+# Run tests
+make test
 
 # Diagnose a repo
 bin/gitnexus-doctor.sh ~/dev/my-repo my-repo MyClassName
@@ -85,10 +112,37 @@ REPOS_DIR=~/dev bin/gitnexus-reindex.sh
 0 4 * * 1 cd /path/to/gitnexus-stable-ops && bin/gitnexus-reindex-all.sh
 ```
 
+## Compatibility
+
+| Platform | Status |
+|----------|--------|
+| macOS (Apple Silicon) | ✅ Tested (primary development platform) |
+| Linux (Ubuntu, Debian, Fedora) | ✅ Tested and supported |
+| Windows | ❌ Not supported (use WSL or Git Bash) |
+
+Requires:
+- Bash 4.0+
+- Git 2.0+
+- jq 1.6+
+- Python 3.6+
+
 ## Documentation
 
 - [Runbook](docs/runbook.md) — Step-by-step operational procedures
 - [Architecture](docs/architecture.md) — Design principles and data flow
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+- 🐛 [Report a bug](.github/ISSUE_TEMPLATE/bug_report.md)
+- 💡 [Request a feature](.github/ISSUE_TEMPLATE/feature_request.md)
+- 🔀 Submit a Pull Request
+
+All contributions must:
+- Include tests for new functionality
+- Follow [Conventional Commits](https://www.conventionalcommits.org/) format
+- Pass `make test`
 
 ## Production Stats
 
