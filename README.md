@@ -206,13 +206,15 @@ volumes:
 
 After 3 months of production use, here are the edge cases we've encountered and solved:
 
-### 1. KuzuDB concurrent query segfault (arm64 macOS)
+### 1. LadybugDB concurrent query lock errors (arm64 macOS)
 
-**Problem**: Running multiple `impact` queries simultaneously crashes the process with SIGSEGV.
+**Problem**: Running multiple `impact` queries simultaneously crashes or returns lock errors from LadybugDB.
 
-**Root cause**: KuzuDB connections are not thread-safe. Node.js async event loop interleaves queries.
+**Root cause**: LadybugDB connections can serialize to a BUSY/lock error under concurrent access from the Node.js async event loop.
 
-**Our fix**: `gitnexus-safe-impact.sh` catches the crash and returns context-based fallback JSON. Upstream PR [#425](https://github.com/abhigyanpatwari/GitNexus/pull/425) adds retry with exponential backoff.
+**Status**: ✅ Fixed upstream in [PR #425](https://github.com/abhigyanpatwari/GitNexus/pull/425) (merged 2026-03-22) — `withLbugDb` now retries on BUSY/lock errors with exponential backoff.
+
+**Our mitigation** (still valuable for older versions): `gitnexus-safe-impact.sh` catches the error and returns context-based fallback JSON. Upgrade to `gitnexus@1.4.7+` to get the upstream fix.
 
 ### 2. Embedding silent deletion
 
@@ -310,10 +312,12 @@ This toolkit was built through deep daily production use of GitNexus — edge ca
 | [#451](https://github.com/abhigyanpatwari/GitNexus/pull/451) | Persist chat history across sessions | ✅ Merged |
 | [#453](https://github.com/abhigyanpatwari/GitNexus/pull/453) | Add structured debug logger | ✅ Merged |
 | [#454](https://github.com/abhigyanpatwari/GitNexus/pull/454) | `detect_changes` — classify by change type | ✅ Merged |
-| [#448](https://github.com/abhigyanpatwari/GitNexus/pull/448) | Improve chat context retention | 🔄 Review |
-| _(+8 more)_ | Docs, bug fixes, edge-case hardening | Various |
+| [#455](https://github.com/abhigyanpatwari/GitNexus/pull/455) | Align `QueryResult` types with LadybugDB WASM API | 🔄 Review |
+| [#443](https://github.com/abhigyanpatwari/GitNexus/pull/443) | Add `maxIterations` control to prevent runaway agent loops | 🔄 Review |
+| [#452](https://github.com/abhigyanpatwari/GitNexus/pull/452) | Add per-depth limit to impact analysis | 🔄 Review |
+| _(+6 more)_ | Error handling, performance, CI stability | 🔄 Review |
 
-**13 PRs submitted → 7 merged** as of March 2026.
+**13 PRs submitted → 7 merged, 6 under review** as of March 2026.
 
 ---
 
