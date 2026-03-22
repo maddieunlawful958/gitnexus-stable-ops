@@ -12,7 +12,7 @@
 
 > *"designed for autonomous agent swarms"* — [@d3thshot7777](https://github.com/abhigyanpatwari/GitNexus), GitNexus maintainer
 
-Built by [LLC Miyabi (合同会社みやび)](https://miyabi-ai.jp) — powering a 40-agent autonomous development system across 25+ repositories in production.
+Built by [Miyabi G.K. (合同会社みやび)](https://miyabi-ai.jp) — powering a 40-agent autonomous development system across 25+ repositories in production.
 
 ---
 
@@ -263,7 +263,7 @@ MIT — See [LICENSE](LICENSE).
 
 ## 🏢 Built by
 
-**[LLC Miyabi (合同会社みやび)](https://miyabi-ai.jp)**
+**[Miyabi G.K. (合同会社みやび)](https://miyabi-ai.jp)**
 Running a 40-agent autonomous AI development system in production.
 
 - 🐦 X: [@The_AGI_WAY](https://x.com/The_AGI_WAY)
