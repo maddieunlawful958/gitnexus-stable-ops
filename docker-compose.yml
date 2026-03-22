@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  gitnexus:
+    build:
+      context: .
+      args:
+        GITNEXUS_VERSION: "1.4.6"
+    volumes:
+      - ./repos:/repos:ro
+      - gitnexus-data:/root/.gitnexus
+    environment:
+      - GITNEXUS_BIN=/usr/local/bin/gitnexus-stable
+      - REPOS_DIR=/repos
+      - NODE_OPTIONS=--max-old-space-size=8192
+    restart: unless-stopped
+    command: >
+      bash -c "
+        echo '0 3 * * * cd /opt/gitnexus-stable-ops && REPOS_DIR=/repos bin/gitnexus-reindex.sh >> /var/log/gitnexus.log 2>&1' | crontab -
+        cron -f
+      "
+
+volumes:
+  gitnexus-data:

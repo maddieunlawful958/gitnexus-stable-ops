@@ -2,69 +2,111 @@
 
 ## Goal
 
-GitNexus の運用を「CLI / MCP / cron / docs」で同じ前提に揃えること。
+Ensure all GitNexus operations (CLI, MCP, cron, agent workflows) share the same stable binary, safety defaults, and data assumptions.
 
 ## Design Principles
 
-- pinned binary を使う
-- shell script は fail fast
-- embeddings を壊さない
-- dirty worktree を勝手に触らない
-- `impact` 障害時も診断フローを止めない
-
-## Components
-
-### `bin/gni`
-
-- 読みやすい CLI wrapper
-- `cypher` の stderr JSON を整形
-- `impact` の代替ビューを提供
-
-### `bin/gitnexus-safe-impact.sh`
-
-- `impact` が正常ならその JSON を返す
-- 失敗時は `context` ベースの fallback JSON を返す
-
-### `bin/gitnexus-doctor.sh`
-
-- stable wrapper と global binary の差分確認
-- `.gitnexus/lbug` の存在確認
-- MCP config の参照先確認
-
-### `bin/gitnexus-smoke-test.sh`
-
-- CI 的な最小健全性チェック
-- 1 repo に対する end-to-end 疎通確認
-
-### `bin/gitnexus-auto-reindex.sh`
-
-- 単一 repo の stale 判定付き reindex
-- `meta.json` と `HEAD` の差分で判断
-
-### `bin/gitnexus-reindex-all.sh`
-
-- registry ベースの全 repo 再解析
-- dirty skip と embeddings 保護が既定
-
-### `bin/gitnexus-reindex.sh`
-
-- `REPOS_DIR` 配下から最近更新 repo を探索
-- cron 向け
-
-### `bin/graph-meta-update.sh`
-
-- cross-community edge を JSONL に集計
-- graph master 系の可視化入力を作る
+1. **Pinned binary** — All scripts use `$GITNEXUS_BIN`, never `npx gitnexus`
+2. **Fail fast** — Shell scripts exit on first error (`set -euo pipefail`)
+3. **Embedding preservation** — Never run `--force` without checking for existing embeddings
+4. **Dirty worktree safety** — Never index uncommitted changes by default
+5. **Graceful degradation** — When `impact` crashes, return fallback JSON instead of failing
 
 ## Data Flow
 
-1. `gitnexus-stable` が repo を index
-2. scripts が `.gitnexus/meta.json` を見て embeddings の有無を判断
-3. diagnostics は `status/context/impact/cypher` を呼ぶ
-4. graph meta は `list` と `cypher` の結果を JSONL に変換する
+```
+Repository (git repo)
+    │
+    ▼  gitnexus analyze
+┌──────────────────────────┐
+│    ~/.gitnexus/lbug/     │  LadybugDB knowledge graph
+│    ├─ nodes (symbols)    │  43,000+ symbols across 26 repos
+│    ├─ edges (relations)  │  100,000+ CALLS/IMPORTS/EXTENDS edges
+│    ├─ processes          │  133 execution flows
+│    └─ embeddings (opt)   │  Semantic vectors for BM25+vector search
+└──────────┬───────────────┘
+           │
+    ┌──────┴──────────────────────────┐
+    │                                  │
+    ▼                                  ▼
+┌──────────────┐              ┌──────────────────┐
+│  gni (CLI)   │              │  MCP Server       │
+│  Human-      │              │  Agent-facing      │
+│  readable    │              │  JSON-RPC          │
+│  output      │              │  over stdio/HTTP   │
+└──────────────┘              └──────────────────┘
+```
 
-## Non Goals
+## Component Responsibilities
 
-- GitNexus 本体の parser 修正
-- MCP server 自体の実装
-- GUI の提供
+### `bin/gni` — CLI Wrapper
+- Captures cypher stderr JSON (GitNexus sends results to stderr)
+- Provides readable formatted output for human consumption
+- Falls back to context when impact fails
+
+### `bin/gitnexus-doctor.sh` — Health Diagnosis
+- Compares pinned binary version vs global installation
+- Checks `.gitnexus/lbug/` database integrity
+- Validates MCP config points to correct binary
+- Reports embedding status per repository
+
+### `bin/gitnexus-auto-reindex.sh` — Smart Reindex
+- Reads `meta.json` last-indexed commit hash
+- Compares with current `git rev-parse HEAD`
+- Skips if index is current (idempotent)
+- Auto-adds `--embeddings` when existing embeddings detected
+- Skips dirty worktrees (configurable)
+
+### `bin/gitnexus-reindex.sh` — Batch Reindex
+- Scans `$REPOS_DIR` for repos modified in last `$LOOKBACK_HOURS`
+- Calls `gitnexus-auto-reindex.sh` for each eligible repo
+- Designed for cron: low noise, clear logging
+
+### `bin/gitnexus-safe-impact.sh` — Resilient Impact Analysis
+- Runs `gitnexus impact` with timeout
+- On SIGSEGV/timeout: queries `gitnexus context` as fallback
+- Returns structured JSON regardless of outcome
+- Critical for AI agent workflows that cannot tolerate failures
+
+### `bin/graph-meta-update.sh` — Cross-Community Edges
+- Queries each repo for community structure
+- Generates JSONL of cross-community relationships
+- Input for graph visualization tools
+
+## Safety Mechanisms
+
+| Mechanism | Protected Against | Implementation |
+|-----------|-------------------|----------------|
+| Version pinning | Data format incompatibility | `$GITNEXUS_BIN` env var |
+| Embedding detection | Silent embedding loss | `meta.json` check in auto-reindex |
+| Dirty skip | Graph pollution | `git status --porcelain` check |
+| Impact fallback | arm64 SIGSEGV crash | Try/catch with context fallback |
+| Stale detection | Unnecessary reindex cycles | HEAD hash comparison |
+
+## Integration Points
+
+### With CI/CD
+```bash
+# In GitHub Actions
+- run: bin/gitnexus-doctor.sh . my-repo ClassName
+```
+
+### With AI Agents (OpenClaw)
+```bash
+# Agent queries the graph
+gni impact AuthService --direction upstream
+gni context AuthService
+gni cypher "MATCH (n)-[r:CALLS]->(m) WHERE n.name = 'AuthService' RETURN m"
+```
+
+### With Cron
+```cron
+0 3 * * *  REPOS_DIR=~/dev bin/gitnexus-reindex.sh
+```
+
+## Non-Goals
+
+- Modifying GitNexus core parser or ingestion pipeline
+- Implementing an MCP server (GitNexus provides this)
+- Building a GUI
+- Replacing GitNexus CLI — this toolkit wraps it

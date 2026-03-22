@@ -2,86 +2,181 @@
 
 [English](./README.md) | [中文](./README_zh.md) | [日本語](./README_ja.md)
 
-[![CI](https://github.com/ShunsukeHayashi/gitnexus-stable-ops/actions/workflows/ci.yml/badge.svg)](https://github.com/ShunsukeHayashi/gitnexus-stable-ops/actions)
-[![Stars](https://img.shields.io/github/stars/ShunsukeHayashi/gitnexus-stable-ops?style=for-the-badge&color=yellow)](https://github.com/ShunsukeHayashi/gitnexus-stable-ops/stargazers)
-[![License](https://img.shields.io/github/license/ShunsukeHayashi/gitnexus-stable-ops?style=for-the-badge)](LICENSE)
-[![Last Commit](https://img.shields.io/github/last-commit/ShunsukeHayashi/gitnexus-stable-ops?style=for-the-badge)](https://github.com/ShunsukeHayashi/gitnexus-stable-ops/commits/main)
-[![Featured in GitNexus Community Integrations](https://img.shields.io/badge/GitNexus-Community%20Integration-blue?style=for-the-badge&logo=github)](https://github.com/abhigyanpatwari/GitNexus)
+![CI](https://github.com/ShunsukeHayashi/gitnexus-stable-ops/actions/workflows/ci.yml/badge.svg)
+![Stars](https://img.shields.io/github/stars/ShunsukeHayashi/gitnexus-stable-ops?style=for-the-badge&color=yellow)
+![License](https://img.shields.io/github/license/ShunsukeHayashi/gitnexus-stable-ops?style=for-the-badge)
+![Last Commit](https://img.shields.io/github/last-commit/ShunsukeHayashi/gitnexus-stable-ops?style=for-the-badge)
+[![Featured in GitNexus Community Integrations](https://img.shields.io/badge/GitNexus-Community%20Integration-blue?style=for-the-badge&logo=github)](https://github.com/abhigyanpatwari/GitNexus#community-integrations)
 
-**Production-grade operational toolkit for running [GitNexus](https://github.com/abhigyanpatwari/GitNexus) at scale — purpose-built for autonomous AI agent swarms.**
+**Production-grade operational toolkit for running [GitNexus](https://github.com/abhigyanpatwari/GitNexus) at scale — safely, reliably, and autonomously.**
 
-> *"designed for autonomous agent swarms"* — [@d3thshot7777](https://github.com/abhigyanpatwari/GitNexus), GitNexus maintainer
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub Stars](https://img.shields.io/github/stars/ShunsukeHayashi/gitnexus-stable-ops?style=social)](https://github.com/ShunsukeHayashi/gitnexus-stable-ops)
+[![GitHub Issues](https://img.shields.io/github/issues/ShunsukeHayashi/gitnexus-stable-ops)](https://github.com/ShunsukeHayashi/gitnexus-stable-ops/issues)
 
-Built by [Miyabi G.K. (合同会社みやび)](https://miyabi-ai.jp) — powering a 40-agent autonomous development system across 25+ repositories in production.
+Built by [合同会社みやび (LLC Miyabi)](https://miyabi-ai.jp) — Running 26 repositories indexed with GitNexus in production, daily.
 
----
-
-## 🏭 Production at Scale
-
-| Metric | Value |
-|--------|-------|
-| **Repositories indexed** | 25+ |
-| **Symbols in knowledge graph** | 32,000+ |
-| **Edges (relationships)** | 73,000+ |
-| **AI agents using this toolkit** | 40 (OpenClaw MAS) |
-| **Uptime** | Daily automated reindex, zero embedding loss |
-| **CI integration** | Git hooks + cron on every commit/merge |
+> **⚠️ License Notice**: This repository is licensed under **MIT** and covers only the wrapper scripts, tooling, and documentation. **[GitNexus](https://github.com/abhigyanpatwari/GitNexus) itself is licensed under [PolyForm NonCommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/).** This toolkit calls the GitNexus CLI but does not include or redistribute any GitNexus source code.
 
 ---
 
-## 🤖 Built for Autonomous Agent Swarms
+## Why This Exists
 
-Modern AI development pipelines rely on **fleets of agents** that must understand codebases, trace dependencies, and safely refactor code — autonomously, at scale.
+GitNexus is the most powerful open-source code intelligence engine available today (⭐18,700+). But running it in **production** — across dozens of repositories, with automated reindexing, inside AI agent workflows — exposes four critical operational problems:
 
-This toolkit turns [GitNexus](https://github.com/abhigyanpatwari/GitNexus) into a **reliable, always-on code intelligence backend** for those agents.
+| Problem | Impact | This toolkit's fix |
+|---------|--------|-------------------|
+| **Version drift** | CLI and MCP reference different GitNexus versions, causing data corruption | Pinned binary (`$GITNEXUS_BIN`) used by all scripts |
+| **Embedding loss** | `analyze --force` without `--embeddings` silently deletes embeddings | Auto-detect existing embeddings, add flag automatically |
+| **Dirty worktree** | Reindexing uncommitted work pollutes the code graph | Skip dirty repos by default (`ALLOW_DIRTY_REINDEX=0`) |
+| **Impact instability** | `impact` command crashes on arm64 macOS with concurrent queries | Graceful fallback to context-based analysis |
+
+**We discovered and solved these problems running GitNexus on 26 repos for 3+ months.**
+
+---
+
+## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│              Autonomous Agent Layer (OpenClaw MAS)           │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐   │
-│  │ dev-arch │ │dev-coder │ │dev-review│ │ sns-strategist│   │
-│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └──────┬───────┘   │
-│       └────────────┴────────────┴───────────────┘            │
-│                            │                                  │
-│                     MCP Protocol                              │
-│                            │                                  │
-├────────────────────────────▼─────────────────────────────────┤
-│              gitnexus-stable-ops (This Toolkit)              │
-│  ┌──────────────────────────────────────────────────────┐    │
-│  │  Safe Reindex │ Impact Analysis │ Doctor │ Smoke Test │    │
-│  │  Git Hooks    │ Batch Cron      │ gni CLI│ Graph Meta │    │
-│  └──────────────────────────────────────────────────────┘    │
-├────────────────────────────┬─────────────────────────────────┤
-│         GitNexus Core      │  KuzuDB Knowledge Graph         │
-│   (code intelligence)      │  32K+ symbols · 73K+ edges      │
-└────────────────────────────┴─────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                        Your Repositories                         │
+│   repo-1/  repo-2/  repo-3/  ...  repo-26/                     │
+└─────────┬───────────────────────────────────────────────────────┘
+          │
+          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              gitnexus-stable-ops  (this toolkit)                 │
+│                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │  gni (CLI)   │  │   doctor.sh  │  │  auto-reindex.sh     │  │
+│  │  Readable    │  │  Version     │  │  Stale detection     │  │
+│  │  output +    │  │  drift +     │  │  Embedding protect   │  │
+│  │  fallbacks   │  │  health      │  │  Dirty skip          │  │
+│  └──────┬───────┘  └──────┬───────┘  └──────────┬───────────┘  │
+│         │                 │                      │               │
+│  ┌──────┴─────────────────┴──────────────────────┴───────────┐  │
+│  │                  Pinned GitNexus Binary                    │  │
+│  │              (~/.local/bin/gitnexus-stable)                │  │
+│  └──────────────────────────┬────────────────────────────────┘  │
+└─────────────────────────────┼───────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    ~/.gitnexus/                                   │
+│   registry.json  ─  lbug/ databases  ─  meta.json per repo     │
+│   43,000+ symbols  │  100,000+ edges  │  133 execution flows    │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 💡 Why This Exists
+## Integration with AI Agent Systems
 
-GitNexus is powerful, but running it in production across many repos creates critical operational challenges:
+This toolkit was designed to work with **autonomous AI agent swarms** — systems where multiple agents collaborate on code changes across repositories.
 
-| Problem | Impact | This Toolkit |
-|---------|--------|-------------|
-| **Version drift** | CLI ↔ MCP use different GitNexus versions → KuzuDB corruption | Pinned `$GITNEXUS_BIN` across all scripts |
-| **Silent embedding loss** | `analyze --force` without `--embeddings` deletes existing vectors | Auto-detects existing embeddings, adds flag automatically |
-| **Dirty worktree corruption** | Reindexing uncommitted work pollutes the code graph | Stale detection + dirty skip (override: `ALLOW_DIRTY_REINDEX=1`) |
-| **Impact analysis instability** | `impact` fails intermittently, blocking agent workflows | Context-based fallback in `gitnexus-safe-impact.sh` |
-| **No batch management** | Managing 25+ repos manually is unsustainable | Registry-based batch reindex with cron support |
+### How agents use gitnexus-stable-ops
+
+```
+Agent receives task: "Fix auth bug in service-api"
+    │
+    ├─ 1. gni context AuthService     → Get callers, callees, dependencies
+    ├─ 2. gni impact AuthService      → What breaks if we change it?
+    ├─ 3. gni cypher "MATCH..."       → Custom graph queries
+    ├─ 4. Agent writes code fix
+    └─ 5. auto-reindex.sh             → Graph stays current (post-commit hook)
+```
+
+### OpenClaw Multi-Agent System example
+
+We run gitnexus-stable-ops with [OpenClaw](https://github.com/openclaw/openclaw), where 38 agents coordinate across 26 repositories:
+
+```yaml
+# Agent workflow: "Fix Issue #123"
+steps:
+  - agent: dev-architect
+    action: gni impact TargetClass --direction upstream
+    purpose: Blast radius analysis before code change
+
+  - agent: dev-coder
+    action: gni context TargetClass
+    purpose: Understand dependencies before writing fix
+
+  - agent: guardian
+    action: gitnexus-doctor.sh ~/dev/repo project TargetClass
+    purpose: Post-change health verification
+
+  - trigger: post-commit hook
+    action: gitnexus-auto-reindex.sh
+    purpose: Graph stays current for next agent
+```
+
+**Key insight**: When agents share a code knowledge graph, they make better decisions. `gni impact` prevents agents from breaking callers they don't know about.
 
 ---
 
-## 🛠 Feature Overview
+## Production Deployment
+
+### Docker (recommended for teams)
+
+```dockerfile
+FROM node:22-slim
+
+# Install GitNexus
+RUN npm install -g gitnexus@1.4.6
+
+# Install stable-ops
+RUN git clone https://github.com/ShunsukeHayashi/gitnexus-stable-ops.git /opt/stable-ops \
+    && cd /opt/stable-ops && make install
+
+# Pin the binary
+RUN ln -sf $(which gitnexus) /usr/local/bin/gitnexus-stable
+
+ENV GITNEXUS_BIN=/usr/local/bin/gitnexus-stable
+ENV REPOS_DIR=/repos
+
+# Daily reindex
+COPY crontab /etc/cron.d/gitnexus
+CMD ["cron", "-f"]
+```
+
+```bash
+# docker-compose.yml
+services:
+  gitnexus:
+    build: .
+    volumes:
+      - ./repos:/repos:ro
+      - gitnexus-data:/root/.gitnexus
+    restart: unless-stopped
+
+volumes:
+  gitnexus-data:
+```
+
+### Cron schedule (our production setup)
+
+```cron
+# Smart reindex: only repos changed in last 24h
+0 3 * * *   cd /opt/stable-ops && REPOS_DIR=/repos bin/gitnexus-reindex.sh >> /var/log/gitnexus-reindex.log
+
+# Weekly full reindex (Sunday 4 AM)
+0 4 * * 0   cd /opt/stable-ops && bin/gitnexus-reindex-all.sh >> /var/log/gitnexus-full-reindex.log
+
+# Health check (daily)
+30 9 * * *  cd /opt/stable-ops && bin/gitnexus-doctor.sh /repos/main-app main-app >> /var/log/gitnexus-doctor.log
+```
+
+---
+
+## Features
 
 | Script | Purpose |
 |--------|---------|
-| `bin/gni` | Enhanced CLI wrapper — readable output, impact fallback, MCP-ready |
-| `bin/gitnexus-doctor.sh` | Diagnose version drift, index health, MCP config |
-| `bin/gitnexus-smoke-test.sh` | End-to-end health check (analyze/status/list/context/cypher/impact) |
-| `bin/gitnexus-safe-impact.sh` | Impact analysis with automatic context-based fallback |
-| `bin/gitnexus-auto-reindex.sh` | Smart single-repo reindex (stale detection, embedding protection) |
+| `bin/gni` | Production CLI wrapper — readable output, cypher stderr capture, impact fallback |
+| `bin/gitnexus-doctor.sh` | Diagnose version drift, index health, MCP config, embedding status |
+| `bin/gitnexus-smoke-test.sh` | End-to-end health check (analyze → status → list → context → cypher → impact) |
+| `bin/gitnexus-safe-impact.sh` | Impact analysis with automatic context-based fallback on failure |
+| `bin/gitnexus-auto-reindex.sh` | Smart single-repo reindex (stale detection + embedding protection + dirty skip) |
 | `bin/gitnexus-reindex.sh` | Batch reindex recently changed repos (cron-friendly) |
 | `bin/gitnexus-reindex-all.sh` | Reindex all registered repos with safety defaults |
 | `bin/graph-meta-update.sh` | Generate cross-community edge JSONL for graph visualization |
@@ -89,184 +184,150 @@ GitNexus is powerful, but running it in production across many repos creates cri
 
 ---
 
-## 🏢 Enterprise Use Cases
+## Edge Cases & Lessons Learned
 
-### 1. Autonomous Code Review Pipeline
-Agents use `gitnexus-safe-impact.sh` to assess blast radius before every PR — without manual intervention.
-```bash
-# Agent runs before approving PR
-impact=$(bin/gitnexus-safe-impact.sh ~/repos/my-service my-service validateUser upstream)
-# Returns JSON: { "risk": "LOW", "direct_callers": 3, "affected_processes": 1 }
-```
+After 3 months of production use, here are the edge cases we've encountered and solved:
 
-### 2. CI/CD Safety Gate
-Git hooks auto-reindex on every commit. Agents query the updated graph before deploying.
-```bash
-make install-hooks REPO=~/repos/my-service
-# Now every `git commit` triggers background reindex — no workflow delay
-```
+### 1. KuzuDB concurrent query segfault (arm64 macOS)
 
-### 3. Multi-Agent Code Intelligence (MCP)
-Any MCP-compatible agent (Claude Code, Cursor, Codex) connects via GitNexus MCP server, powered by a stable, always-fresh index.
-```json
-{
-  "mcpServers": {
-    "gitnexus": {
-      "command": "gitnexus",
-      "args": ["serve", "--port", "4747"]
-    }
-  }
-}
-```
+**Problem**: Running multiple `impact` queries simultaneously crashes the process with SIGSEGV.
 
-### 4. Large-Scale Repository Fleet Management
-Manage 10–100+ repos with a single registry and daily cron.
-```bash
-# Daily reindex at 3 AM — all repos, embedding-safe
-0 3 * * * cd /path/to/gitnexus-stable-ops && bin/gitnexus-reindex-all.sh
-```
+**Root cause**: KuzuDB connections are not thread-safe. Node.js async event loop interleaves queries.
 
----
+**Our fix**: `gitnexus-safe-impact.sh` catches the crash and returns context-based fallback JSON. Upstream PR [#425](https://github.com/abhigyanpatwari/GitNexus/pull/425) adds retry with exponential backoff.
 
-## 🔌 MCP / Claude Code Integration
+### 2. Embedding silent deletion
 
-This toolkit is designed as the **stable backend** for MCP-connected AI agents.
+**Problem**: `gitnexus analyze --force` rebuilds the index but drops embeddings if `--embeddings` is not explicitly passed.
 
-```bash
-# Start MCP server backed by this toolkit
-gitnexus serve --port 4747
+**Our fix**: `gitnexus-auto-reindex.sh` checks `meta.json` for existing embedding data. If found, `--embeddings` is added automatically. **Zero embedding loss since deployment.**
 
-# Claude Code, Cursor, or any MCP client connects automatically
-# using .mcp.json or claude_desktop_config.json
-```
+### 3. Version drift between CLI and MCP
 
-Compatible with:
-- ✅ Claude Code (Anthropic)
-- ✅ Cursor
-- ✅ OpenCode
-- ✅ OpenClaw MAS (autonomous agent orchestration)
-- ✅ Any MCP-compatible client
+**Problem**: Global `npx gitnexus` might resolve to a different version than the MCP server's bundled CLI. KuzuDB → LadybugDB migration caused data format incompatibility.
+
+**Our fix**: All scripts use `$GITNEXUS_BIN` which points to a pinned installation. `gitnexus-doctor.sh` detects version mismatches.
+
+### 4. Dirty worktree graph pollution
+
+**Problem**: Reindexing while you have uncommitted changes includes WIP code in the knowledge graph. Agents then see incomplete implementations.
+
+**Our fix**: `gitnexus-auto-reindex.sh` skips dirty repos by default. Override with `ALLOW_DIRTY_REINDEX=1` when needed.
+
+### 5. Large monorepo heap exhaustion
+
+**Problem**: Repos with 100K+ files exhaust the default Node.js heap.
+
+**Our fix**: Scripts inherit `NODE_OPTIONS="--max-old-space-size=8192"` when set. The auto-reindex detects failure and logs a clear error message.
 
 ---
 
+## Quick Start
 
-### 🪟 Windows Setup
-
-**Option 1: WSL2 (Recommended)**
-```powershell
-# Install WSL2 (PowerShell as Administrator)
-wsl --install
-
-# Then in WSL terminal:
-git clone https://github.com/ShunsukeHayashi/gitnexus-stable-ops.git
-cd gitnexus-stable-ops && make install
-```
-
-**Option 2: Git Bash**
 ```bash
-# Git Bash already includes bash, git, python3
-# Install jq for Windows: https://jqlang.github.io/jq/download/
-# Then:
+# Install
 git clone https://github.com/ShunsukeHayashi/gitnexus-stable-ops.git
-cd gitnexus-stable-ops && make install
-```
+cd gitnexus-stable-ops
+make install
 
-> **Note**: Native CMD/PowerShell are not supported. WSL2 provides the best experience and is recommended for production use.
+# Run tests
+make test
 
-## 🚀 Quick Start
-
-### One-liner install
-```bash
-git clone https://github.com/ShunsukeHayashi/gitnexus-stable-ops.git
-cd gitnexus-stable-ops && make install
-```
-
-### Basic usage
-```bash
 # Diagnose a repo
-bin/gitnexus-doctor.sh ~/dev/my-repo my-repo
+bin/gitnexus-doctor.sh ~/dev/my-repo my-repo MyClassName
 
-# Smart reindex (skips if index is current, protects embeddings)
+# Smart reindex (skips if up-to-date)
 REPO_PATH=~/dev/my-repo bin/gitnexus-auto-reindex.sh
 
 # Batch reindex repos changed in last 24h
 REPOS_DIR=~/dev bin/gitnexus-reindex.sh
 
-# Run full health check
-bin/gitnexus-smoke-test.sh ~/dev/my-repo my-repo
-```
-
-### Install CI git hooks
-```bash
+# Install git hooks (auto-reindex on commit)
 make install-hooks REPO=~/dev/my-repo
-# Hooks run in background on every commit/merge — zero delay
 ```
 
 ---
 
-## ⚙️ Environment Variables
+## Safety Defaults
+
+| Feature | Default | Override |
+|---------|---------|----------|
+| Embedding protection | Auto-detect and preserve | Always on |
+| Dirty worktree skip | Skip dirty repos | `ALLOW_DIRTY_REINDEX=1` |
+| Impact fallback | Context-based JSON on failure | Always on |
+| Version pinning | `$GITNEXUS_BIN` | Set env var |
+
+## Environment Variables
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `GITNEXUS_BIN` | `~/.local/bin/gitnexus-stable` | Pinned CLI path |
+| `GITNEXUS_BIN` | `~/.local/bin/gitnexus-stable` | Pinned GitNexus CLI path |
 | `REGISTRY_PATH` | `~/.gitnexus/registry.json` | Indexed repo registry |
 | `ALLOW_DIRTY_REINDEX` | `0` | Allow reindexing dirty worktrees |
-| `FORCE_REINDEX` | `1` | Force reindex in smoke tests |
 | `REPOS_DIR` | `~/dev` | Root directory for batch reindex |
 | `LOOKBACK_HOURS` | `24` | How far back to check for changes |
-| `GITNEXUS_AUTO_REINDEX` | `1` | Set `0` to disable git hook auto-reindex |
 
 ---
 
-## 📋 Requirements
+## Production Stats
 
-- `bash` 4.0+, `git` 2.0+, `jq` 1.6+, `python3` 3.6+
-- `gitnexus` CLI ([install guide](https://github.com/abhigyanpatwari/GitNexus))
+Running in production at [合同会社みやび (LLC Miyabi)](https://miyabi-ai.jp):
 
-## 🖥 Compatibility
+| Metric | Value |
+|--------|-------|
+| Repositories indexed | **26** |
+| Symbols in graph | **43,000+** |
+| Relationships tracked | **100,000+** |
+| Execution flows detected | **133** |
+| Daily automated reindex | ✅ via cron |
+| Embedding loss incidents | **0** (since deployment) |
+| Uptime | **3+ months** |
+| AI agents using the graph | **38** (via OpenClaw) |
+
+---
+
+## Compatibility
 
 | Platform | Status |
 |----------|--------|
-| macOS (Apple Silicon / x86) | ✅ Primary development platform |
-| Linux (Ubuntu, Debian, Fedora) | ✅ Tested and supported |
-| Windows 10/11 (WSL2) | ✅ Recommended — full feature support |
-| Windows 10/11 (Git Bash) | ✅ Supported — all scripts work |
-| Windows 10/11 (Native CMD/PowerShell) | ❌ Not supported |
+| macOS (Apple Silicon) | ✅ Primary development platform |
+| Linux (Ubuntu, Debian, Fedora) | ✅ Tested |
+| Docker | ✅ See Docker section above |
+| Windows | ⚠️ Use WSL or Git Bash |
+
+Requires: Bash 4.0+ · Git 2.0+ · jq 1.6+ · Python 3.6+ · Node.js 20+
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 - [Runbook](docs/runbook.md) — Step-by-step operational procedures
 - [Architecture](docs/architecture.md) — Design principles and data flow
+- [MCP Integration](docs/mcp-integration.md) — MCP server configuration
 
----
-
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 All contributions must:
-- Include tests (`make test`)
+- Include tests for new functionality
 - Follow [Conventional Commits](https://www.conventionalcommits.org/)
-- Pass CI
+- Pass `make test`
 
 ---
 
-## ⚖️ License
+## License
 
 MIT — See [LICENSE](LICENSE).
 
-> **Note**: MIT applies only to wrapper scripts and tooling in this repo. [GitNexus](https://github.com/abhigyanpatwari/GitNexus) is licensed under [PolyForm NonCommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/). No GitNexus source code is included here.
+**Note**: The MIT license applies only to this toolkit. [GitNexus](https://github.com/abhigyanpatwari/GitNexus) is licensed under [PolyForm NonCommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/).
 
 ---
 
-## 🏢 Built by
+## Built by
 
-**[Miyabi G.K. (合同会社みやび)](https://miyabi-ai.jp)**
-Running a 40-agent autonomous AI development system in production.
+**[合同会社みやび (LLC Miyabi)](https://miyabi-ai.jp)**
 
-- 🐦 X: [@The_AGI_WAY](https://x.com/The_AGI_WAY)
-- 📧 shunsuke.hayashi@miyabi-ai.jp
-- 🐙 GitHub: [@ShunsukeHayashi](https://github.com/ShunsukeHayashi)
+🐦 [@The_AGI_WAY](https://x.com/The_AGI_WAY) · 📧 shunsuke.hayashi@miyabi-ai.jp
 
+<sub>Active contributor to [GitNexus](https://github.com/abhigyanpatwari/GitNexus) — 22 PRs submitted, 8 merged, 11 issues filed.</sub>
