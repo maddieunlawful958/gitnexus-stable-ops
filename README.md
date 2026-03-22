@@ -8,13 +8,16 @@
 ![Last Commit](https://img.shields.io/github/last-commit/ShunsukeHayashi/gitnexus-stable-ops?style=for-the-badge)
 [![Featured in GitNexus Community Integrations](https://img.shields.io/badge/GitNexus-Community%20Integration-blue?style=for-the-badge&logo=github)](https://github.com/abhigyanpatwari/GitNexus#community-integrations)
 
-**Production-grade operational toolkit for running [GitNexus](https://github.com/abhigyanpatwari/GitNexus) at scale — safely, reliably, and autonomously.**
+**Production-grade operational toolkit for running [GitNexus](https://github.com/abhigyanpatwari/GitNexus) at scale — purpose-built for autonomous AI agent swarms.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Stars](https://img.shields.io/github/stars/ShunsukeHayashi/gitnexus-stable-ops?style=social)](https://github.com/ShunsukeHayashi/gitnexus-stable-ops)
 [![GitHub Issues](https://img.shields.io/github/issues/ShunsukeHayashi/gitnexus-stable-ops)](https://github.com/ShunsukeHayashi/gitnexus-stable-ops/issues)
 
-Built by [合同会社みやび (LLC Miyabi)](https://miyabi-ai.jp) — Running 26 repositories indexed with GitNexus in production, daily.
+> *"designed for autonomous agent swarms"*
+> — [@d3thshot7777](https://github.com/abhigyanpatwari/GitNexus), GitNexus maintainer
+
+Built by [合同会社みやび (LLC Miyabi)](https://miyabi-ai.jp) — Running 25+ repositories indexed with GitNexus in production, daily.
 
 > **⚠️ License Notice**: This repository is licensed under **MIT** and covers only the wrapper scripts, tooling, and documentation. **[GitNexus](https://github.com/abhigyanpatwari/GitNexus) itself is licensed under [PolyForm NonCommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/).** This toolkit calls the GitNexus CLI but does not include or redistribute any GitNexus source code.
 
@@ -22,7 +25,7 @@ Built by [合同会社みやび (LLC Miyabi)](https://miyabi-ai.jp) — Running 
 
 ## Why This Exists
 
-GitNexus is the most powerful open-source code intelligence engine available today (⭐18,700+). But running it in **production** — across dozens of repositories, with automated reindexing, inside AI agent workflows — exposes four critical operational problems:
+GitNexus is one of the most capable open-source code intelligence engines available today. But running it in **production** — across dozens of repositories, with automated reindexing, inside AI agent workflows — exposes four critical operational problems:
 
 | Problem | Impact | This toolkit's fix |
 |---------|--------|-------------------|
@@ -31,7 +34,23 @@ GitNexus is the most powerful open-source code intelligence engine available tod
 | **Dirty worktree** | Reindexing uncommitted work pollutes the code graph | Skip dirty repos by default (`ALLOW_DIRTY_REINDEX=0`) |
 | **Impact instability** | `impact` command crashes on arm64 macOS with concurrent queries | Graceful fallback to context-based analysis |
 
-**We discovered and solved these problems running GitNexus on 26 repos for 3+ months.**
+**We discovered and solved these problems running GitNexus on 25+ repos for 3+ months.**
+
+---
+
+## Production Stats
+
+Running in production at [合同会社みやび (LLC Miyabi)](https://miyabi-ai.jp):
+
+| Metric | Value |
+|--------|-------|
+| Repositories indexed | **25+** |
+| Symbols in knowledge graph | **32,000+** |
+| Edges (relationships) | **73,000+** |
+| AI agents using the graph | **40** (OpenClaw MAS) |
+| Embedding loss incidents | **0** since v1.0 |
+| Upstream PRs merged to GitNexus | **7 of 13** submitted |
+| Production uptime | **3+ months** |
 
 ---
 
@@ -40,7 +59,7 @@ GitNexus is the most powerful open-source code intelligence engine available tod
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Your Repositories                         │
-│   repo-1/  repo-2/  repo-3/  ...  repo-26/                     │
+│   repo-1/  repo-2/  repo-3/  ...  repo-25+/                    │
 └─────────┬───────────────────────────────────────────────────────┘
           │
           ▼
@@ -63,8 +82,8 @@ GitNexus is the most powerful open-source code intelligence engine available tod
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    ~/.gitnexus/                                   │
-│   registry.json  ─  lbug/ databases  ─  meta.json per repo     │
-│   43,000+ symbols  │  100,000+ edges  │  133 execution flows    │
+│   registry.json  ─  KuzuDB databases  ─  meta.json per repo    │
+│   32,000+ symbols  │  73,000+ edges  │  execution flows        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -88,7 +107,7 @@ Agent receives task: "Fix auth bug in service-api"
 
 ### OpenClaw Multi-Agent System example
 
-We run gitnexus-stable-ops with [OpenClaw](https://github.com/openclaw/openclaw), where 38 agents coordinate across 26 repositories:
+We run gitnexus-stable-ops with 40 agents coordinating across 25+ repositories:
 
 ```yaml
 # Agent workflow: "Fix Issue #123"
@@ -134,12 +153,11 @@ RUN ln -sf $(which gitnexus) /usr/local/bin/gitnexus-stable
 ENV GITNEXUS_BIN=/usr/local/bin/gitnexus-stable
 ENV REPOS_DIR=/repos
 
-# Daily reindex
 COPY crontab /etc/cron.d/gitnexus
 CMD ["cron", "-f"]
 ```
 
-```bash
+```yaml
 # docker-compose.yml
 services:
   gitnexus:
@@ -269,23 +287,6 @@ make install-hooks REPO=~/dev/my-repo
 
 ---
 
-## Production Stats
-
-Running in production at [合同会社みやび (LLC Miyabi)](https://miyabi-ai.jp):
-
-| Metric | Value |
-|--------|-------|
-| Repositories indexed | **26** |
-| Symbols in graph | **43,000+** |
-| Relationships tracked | **100,000+** |
-| Execution flows detected | **133** |
-| Daily automated reindex | ✅ via cron |
-| Embedding loss incidents | **0** (since deployment) |
-| Uptime | **3+ months** |
-| AI agents using the graph | **38** (via OpenClaw) |
-
----
-
 ## Compatibility
 
 | Platform | Status |
@@ -296,6 +297,58 @@ Running in production at [合同会社みやび (LLC Miyabi)](https://miyabi-ai.
 | Windows | ⚠️ Use WSL or Git Bash |
 
 Requires: Bash 4.0+ · Git 2.0+ · jq 1.6+ · Python 3.6+ · Node.js 20+
+
+---
+
+## Upstream Contributions
+
+This toolkit was built through deep daily production use of GitNexus — edge cases found here become fixes upstream:
+
+| PR | Title | Status |
+|----|-------|--------|
+| [#441](https://github.com/abhigyanpatwari/GitNexus/pull/441) | Add `confidence` constant for similarity threshold | ✅ Merged |
+| [#451](https://github.com/abhigyanpatwari/GitNexus/pull/451) | Persist chat history across sessions | ✅ Merged |
+| [#453](https://github.com/abhigyanpatwari/GitNexus/pull/453) | Add structured debug logger | ✅ Merged |
+| [#454](https://github.com/abhigyanpatwari/GitNexus/pull/454) | `detect_changes` — classify by change type | ✅ Merged |
+| [#448](https://github.com/abhigyanpatwari/GitNexus/pull/448) | Improve chat context retention | 🔄 Review |
+| _(+8 more)_ | Docs, bug fixes, edge-case hardening | Various |
+
+**13 PRs submitted → 7 merged** as of March 2026.
+
+---
+
+## Roadmap
+
+> Roadmap reflects real operational needs encountered at scale. Contributions welcome.
+
+### v1.3 (Q2 2026)
+- [ ] Docker image for zero-dependency deployment
+- [ ] Prometheus metrics endpoint (`/metrics`)
+- [ ] Slack/Discord webhook on reindex failure
+
+### v1.4 (Q3 2026)
+- [ ] Multi-node distributed reindex orchestration
+- [ ] GitHub Actions composite action (`uses: ShunsukeHayashi/gitnexus-stable-ops@v1`)
+- [ ] Web dashboard for graph health visualization
+
+### v2.0 (Q4 2026)
+- [ ] Native Kubernetes operator
+- [ ] Enterprise SSO / audit logging
+- [ ] SLA-backed managed service offering
+
+---
+
+## Enterprise
+
+**Running GitNexus at scale in a regulated environment?**
+
+Miyabi G.K. offers:
+- Architecture review & deployment guidance
+- Custom integration with your CI/CD pipeline
+- Priority issue resolution
+
+📧 [shunsuke.hayashi@miyabi-ai.jp](mailto:shunsuke.hayashi@miyabi-ai.jp)
+🐦 [@The_AGI_WAY](https://x.com/The_AGI_WAY)
 
 ---
 
@@ -330,4 +383,4 @@ MIT — See [LICENSE](LICENSE).
 
 🐦 [@The_AGI_WAY](https://x.com/The_AGI_WAY) · 📧 shunsuke.hayashi@miyabi-ai.jp
 
-<sub>Active contributor to [GitNexus](https://github.com/abhigyanpatwari/GitNexus) — 22 PRs submitted, 8 merged, 11 issues filed.</sub>
+<sub>Active contributor to [GitNexus](https://github.com/abhigyanpatwari/GitNexus) — 13 PRs submitted, 7 merged.</sub>
