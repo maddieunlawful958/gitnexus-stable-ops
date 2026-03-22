@@ -357,6 +357,7 @@ Miyabi G.K. offers:
 - [Runbook](docs/runbook.md) — Step-by-step operational procedures
 - [Architecture](docs/architecture.md) — Design principles and data flow
 - [MCP Integration](docs/mcp-integration.md) — MCP server configuration
+- [Enterprise FAQ](docs/enterprise-faq.md) — Docker, K8s, CI/CD, security, SLA
 
 ## Contributing
 
