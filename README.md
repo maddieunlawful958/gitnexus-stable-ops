@@ -313,11 +313,12 @@ This toolkit was built through deep daily production use of GitNexus — edge ca
 | [#453](https://github.com/abhigyanpatwari/GitNexus/pull/453) | Add structured debug logger | ✅ Merged |
 | [#454](https://github.com/abhigyanpatwari/GitNexus/pull/454) | `detect_changes` — classify by change type | ✅ Merged |
 | [#455](https://github.com/abhigyanpatwari/GitNexus/pull/455) | Align `QueryResult` types with LadybugDB WASM API | 🔄 Review |
+| [#458](https://github.com/abhigyanpatwari/GitNexus/pull/458) | Expose per-repo resources in `resources/list` (fix MCP discovery) | 🔄 Review |
 | [#443](https://github.com/abhigyanpatwari/GitNexus/pull/443) | Add `maxIterations` control to prevent runaway agent loops | 🔄 Review |
 | [#452](https://github.com/abhigyanpatwari/GitNexus/pull/452) | Add per-depth limit to impact analysis | 🔄 Review |
 | _(+6 more)_ | Error handling, performance, CI stability | 🔄 Review |
 
-**13 PRs submitted → 7 merged, 6 under review** as of March 2026.
+**14 PRs submitted → 7 merged, 7 under review** as of March 2026.
 
 ---
 
@@ -389,4 +390,4 @@ MIT — See [LICENSE](LICENSE).
 
 🐦 [@The_AGI_WAY](https://x.com/The_AGI_WAY) · 📧 shunsuke.hayashi@miyabi-ai.jp
 
-<sub>Active contributor to [GitNexus](https://github.com/abhigyanpatwari/GitNexus) — 13 PRs submitted, 7 merged.</sub>
+<sub>Active contributor to [GitNexus](https://github.com/abhigyanpatwari/GitNexus) — 14 PRs submitted, 7 merged.</sub>
