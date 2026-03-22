@@ -17,7 +17,7 @@
 > *"designed for autonomous agent swarms"*
 > — [@d3thshot7777](https://github.com/abhigyanpatwari/GitNexus), GitNexus maintainer
 
-Built by [合同会社みやび (LLC Miyabi)](https://miyabi-ai.jp) — Running 25+ repositories indexed with GitNexus in production, daily.
+Built by [合同会社みやび (Miyabi G.K.)](https://miyabi-ai.jp) — Running 25+ repositories indexed with GitNexus in production, daily.
 
 > **⚠️ License Notice**: This repository is licensed under **MIT** and covers only the wrapper scripts, tooling, and documentation. **[GitNexus](https://github.com/abhigyanpatwari/GitNexus) itself is licensed under [PolyForm NonCommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/).** This toolkit calls the GitNexus CLI but does not include or redistribute any GitNexus source code.
 
@@ -40,7 +40,7 @@ GitNexus is one of the most capable open-source code intelligence engines availa
 
 ## Production Stats
 
-Running in production at [合同会社みやび (LLC Miyabi)](https://miyabi-ai.jp):
+Running in production at [合同会社みやび (Miyabi G.K.)](https://miyabi-ai.jp):
 
 | Metric | Value |
 |--------|-------|
@@ -381,7 +381,7 @@ MIT — See [LICENSE](LICENSE).
 
 ## Built by
 
-**[合同会社みやび (LLC Miyabi)](https://miyabi-ai.jp)**
+**[合同会社みやび (Miyabi G.K.)](https://miyabi-ai.jp)**
 
 🐦 [@The_AGI_WAY](https://x.com/The_AGI_WAY) · 📧 shunsuke.hayashi@miyabi-ai.jp
 

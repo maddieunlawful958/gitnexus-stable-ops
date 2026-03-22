@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Stars](https://img.shields.io/github/stars/ShunsukeHayashi/gitnexus-stable-ops?style=social)](https://github.com/ShunsukeHayashi/gitnexus-stable-ops)
 
-由 [合同会社みやび (LLC Miyabi)](https://miyabi-ai.jp) 构建 — 在生产环境中管理 25+ 个使用 GitNexus 索引的仓库。
+由 [合同会社みやび (Miyabi G.K.)](https://miyabi-ai.jp) 构建 — 在生产环境中管理 25+ 个使用 GitNexus 索引的仓库。
 
 > **⚠️ 许可证说明**: 此仓库使用 **MIT 许可证**，仅适用于包装脚本、工具和文档。**[GitNexus](https://github.com/abhigyanpatwari/GitNexus) 本身使用 [PolyForm NonCommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/) 许可证。** 此工具集调用 GitNexus CLI，但不包含或重新分发任何 GitNexus 源代码。商业使用前请查看 [GitNexus 许可证](https://github.com/abhigyanpatwari/GitNexus/blob/main/LICENSE)。
 
