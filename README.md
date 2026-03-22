@@ -149,6 +149,30 @@ Compatible with:
 
 ---
 
+
+### 🪟 Windows Setup
+
+**Option 1: WSL2 (Recommended)**
+```powershell
+# Install WSL2 (PowerShell as Administrator)
+wsl --install
+
+# Then in WSL terminal:
+git clone https://github.com/ShunsukeHayashi/gitnexus-stable-ops.git
+cd gitnexus-stable-ops && make install
+```
+
+**Option 2: Git Bash**
+```bash
+# Git Bash already includes bash, git, python3
+# Install jq for Windows: https://jqlang.github.io/jq/download/
+# Then:
+git clone https://github.com/ShunsukeHayashi/gitnexus-stable-ops.git
+cd gitnexus-stable-ops && make install
+```
+
+> **Note**: Native CMD/PowerShell are not supported. WSL2 provides the best experience and is recommended for production use.
+
 ## 🚀 Quick Start
 
 ### One-liner install
@@ -205,7 +229,9 @@ make install-hooks REPO=~/dev/my-repo
 |----------|--------|
 | macOS (Apple Silicon / x86) | ✅ Primary development platform |
 | Linux (Ubuntu, Debian, Fedora) | ✅ Tested and supported |
-| Windows | ❌ Use WSL or Git Bash |
+| Windows 10/11 (WSL2) | ✅ Recommended — full feature support |
+| Windows 10/11 (Git Bash) | ✅ Supported — all scripts work |
+| Windows 10/11 (Native CMD/PowerShell) | ❌ Not supported |
 
 ---
 
@@ -243,3 +269,4 @@ Running a 40-agent autonomous AI development system in production.
 - 🐦 X: [@The_AGI_WAY](https://x.com/The_AGI_WAY)
 - 📧 shunsuke.hayashi@miyabi-ai.jp
 - 🐙 GitHub: [@ShunsukeHayashi](https://github.com/ShunsukeHayashi)
+
