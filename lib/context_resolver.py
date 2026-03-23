@@ -112,7 +112,10 @@ def _preprocess_query(query: str) -> str:
             if non_cjk:
                 tokens.extend(non_cjk.split())
         else:
-            tokens.append(part)
+            # Sanitize FTS5 special chars: '-' is treated as NOT operator.
+            # Convert intra-word hyphens (e.g., "agent-context-graph" → "agent context graph")
+            sanitized = re.sub(r'(?<=[a-zA-Z0-9])-(?=[a-zA-Z0-9])', ' ', part)
+            tokens.extend(sanitized.split())
 
     # Deduplicate while preserving order
     seen: set[str] = set()

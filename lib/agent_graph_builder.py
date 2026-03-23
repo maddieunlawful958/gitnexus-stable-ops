@@ -347,6 +347,24 @@ def parse_skills(skill_dir: Path, repo_root: Path) -> list[SkillNode]:
 
         # Build skill from frontmatter or filename
         skill_id = md_file.stem
+
+        # Infer category from skill name patterns when still unknown
+        if category == "unknown":
+            sid_lower = skill_id.lower()
+            if any(p in sid_lower for p in ["gitnexus", "git-", "github", "docker", "deploy", "infra", "build", "ci-", "cd-", "windows-", "ssd-", "storage", "miso", "task-dag", "agent-skill-bus", "agent-context", "codex-worker", "claude-code"]):
+                category = "infra"
+            elif any(p in sid_lower for p in ["openclaw", "opencode"]):
+                category = "openclaw"
+            elif any(p in sid_lower for p in ["discord", "telegram", "twitter", "x-ops", "slack", "email", "gmail", "announce", "voice", "pushcut"]):
+                category = "communication"
+            elif any(p in sid_lower for p in ["note", "blog", "content", "article", "write", "post", "zenn", "youtube", "sns", "rss"]):
+                category = "content"
+            elif any(p in sid_lower for p in ["task", "schedule", "habit", "health", "memo", "journal", "personal", "hayashi", "learning", "obsidian"]):
+                category = "personal"
+            elif any(p in sid_lower for p in ["business", "legal", "company", "tax", "financial", "market", "llc", "gyosei"]):
+                category = "business"
+            else:
+                category = "general"
         name = skill_id
 
         if fm:
