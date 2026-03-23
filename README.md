@@ -10,6 +10,8 @@
 
 **Production-grade operational toolkit for running [GitNexus](https://github.com/abhigyanpatwari/GitNexus) at scale — purpose-built for autonomous AI agent swarms.**
 
+> **🆕 v1.3.0 — Agent Context Graph**: One command builds a queryable knowledge graph of your agents, skills, and cluster. Inject precise context into any LLM with `gni aq "deploy" --level 1` (~100 tokens). Auto-generate `CLAUDE.md` / `AGENTS.md` with `gni cg . --update`. [→ Quick Start](#agent-context-graph)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Stars](https://img.shields.io/github/stars/ShunsukeHayashi/gitnexus-stable-ops?style=social)](https://github.com/ShunsukeHayashi/gitnexus-stable-ops)
 [![GitHub Issues](https://img.shields.io/github/issues/ShunsukeHayashi/gitnexus-stable-ops)](https://github.com/ShunsukeHayashi/gitnexus-stable-ops/issues)
@@ -186,6 +188,73 @@ volumes:
 
 ---
 
+## Agent Context Graph
+
+> **New in v1.3.0** — Index your agents, skills, and infrastructure as a queryable knowledge graph. Beyond code symbols, give your LLMs a live map of *who can do what and where*.
+
+### What it is
+
+Beyond code symbols, gitnexus-stable-ops indexes **agent-level entities** from your workspace:
+
+| Entity | Source | Description |
+|--------|--------|-------------|
+| `Agent` | `KNOWLEDGE/AGENTS_*.md` frontmatter | Named agents with roles, pane IDs, society membership |
+| `Skill` | `SKILL/**/*.md` | Skills with priority, keywords, script paths |
+| `KnowledgeDoc` | `KNOWLEDGE/**/*.md` | Reference docs and context files |
+| `MemoryDoc` | `MEMORY/**/*.md` | Session memories and daily logs |
+| `ComputeNode` | `workspace.json nodes[]` | Physical/virtual machines in your cluster |
+| `WorkspaceService` | `workspace.json services[]` | Deployed agents/services with model info |
+
+### Progressive Disclosure
+
+Query the graph at three levels of detail:
+
+| Level | Tokens | Use case |
+|-------|--------|----------|
+| `--level 1` | ~100 | LLM system prompt overview — "what exists?" |
+| `--level 2` | ~400 | Default context injection — names + roles + descriptions |
+| `--level 3` | ~2000 | Deep dive — full info + edges + files to read |
+
+```bash
+# Build the agent graph
+gni agent-index ~/dev/MY_WORKSPACE --force
+
+# Query at different detail levels
+gni aq "deploy agent"     --level 1   # Overview: agent IDs only
+gni aq "cc-hayashi"       --level 2   # Standard: name + role + description
+gni aq "announce skill"   --level 3   # Full: all fields + edges + file paths
+
+# Inject into LLM system prompt
+CONTEXT=$(gni aq "all agents" --level 2 --format progressive)
+
+# Machine-readable output
+gni agent-query "announce" --format json
+```
+
+### Workspace Manifest (`workspace.json`)
+
+Declare your cluster topology once, query everywhere:
+
+```json
+{
+  "nodes": [
+    { "id": "macbook", "role": "primary", "os": "macos" }
+  ],
+  "services": [
+    { "id": "cc-hayashi", "type": "agent", "node": "macbook",
+      "labels": { "model": "claude-sonnet-4-6" } }
+  ],
+  "knowledge_refs": {
+    "skills_dir": "SKILL",
+    "memory_dir": "MEMORY"
+  }
+}
+```
+
+See [docs/agent-context-graph.md](./docs/agent-context-graph.md) for the complete guide.
+
+---
+
 ## Features
 
 | Script | Purpose |
@@ -326,15 +395,23 @@ This toolkit was built through deep daily production use of GitNexus — edge ca
 
 > Roadmap reflects real operational needs encountered at scale. Contributions welcome.
 
-### v1.3 (Q2 2026)
+### ✅ v1.3.0 (Released 2026-03-23)
+- [x] **Agent Context Graph** — queryable knowledge graph of agents, skills, compute nodes
+- [x] **Progressive Disclosure** — Level 1/2/3 context injection (100/400/2000 tokens)
+- [x] **`gni context-gen`** — one-command CLAUDE.md / AGENTS.md auto-generation
+- [x] **`gni agent-query`** — FTS5 + BM25 ranked search with bigram CJK support
+- [x] **English + Japanese documentation** for Agent Context Graph
+
+### v1.4 (Q2 2026)
 - [ ] Docker image for zero-dependency deployment
 - [ ] Prometheus metrics endpoint (`/metrics`)
 - [ ] Slack/Discord webhook on reindex failure
-
-### v1.4 (Q3 2026)
-- [ ] Multi-node distributed reindex orchestration
 - [ ] GitHub Actions composite action (`uses: ShunsukeHayashi/gitnexus-stable-ops@v1`)
+
+### v1.5 (Q3 2026)
+- [ ] Multi-node distributed reindex orchestration
 - [ ] Web dashboard for graph health visualization
+- [ ] `.gitnexusignore` support for fine-grained indexing control
 
 ### v2.0 (Q4 2026)
 - [ ] Native Kubernetes operator
@@ -359,11 +436,17 @@ Miyabi G.K. offers:
 
 ## Documentation
 
+### Agent Context Graph (v1.3.0)
+- [English Guide](docs/agent-context-graph_en.md) — Complete guide: setup, commands, LLM injection, FAQ
+- [日本語ガイド](docs/agent-context-graph.md) — 詳細ガイド: セットアップ、コマンドリファレンス、LLM統合
+
+### Core Toolkit
 - [Runbook](docs/runbook.md) — Step-by-step operational procedures
 - [Architecture](docs/architecture.md) — Design principles and data flow
 - [MCP Integration](docs/mcp-integration.md) — MCP server configuration
 - [CI/CD Integration](docs/ci-cd-integration.md) — GitHub Actions, GitLab, impact analysis in PRs
 - [Enterprise FAQ](docs/enterprise-faq.md) — Docker, K8s, security, SLA
+- [Workspace Schema](docs/workspace-schema.md) — `.gitnexus/workspace.json` reference
 
 ## Contributing
 

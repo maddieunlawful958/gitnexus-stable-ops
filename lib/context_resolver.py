@@ -74,6 +74,7 @@ class ContextResult:
     estimated_tokens: int = 0
     savings_vs_full: str = "0%"
     metadata: dict = field(default_factory=dict)
+    is_fallback: bool = False  # True when no query match found; showing default context
 
 
 # --- Query Preprocessing ---
@@ -247,7 +248,7 @@ def expand_neighbors(
         graph_score = edge_weight / (depth + 1)
 
         # Look up node details
-        name, path, token_est = _lookup_node(conn, neighbor_id, neighbor_type, repo_root)
+        name, path, token_est, desc = _lookup_node(conn, neighbor_id, neighbor_type, repo_root)
 
         neighbors.append(ScoredNode(
             node_id=neighbor_id,
@@ -257,6 +258,7 @@ def expand_neighbors(
             depth=depth + 1,
             path=path,
             token_estimate=token_est,
+            description=desc,
         ))
 
         # Recurse
@@ -273,40 +275,46 @@ def _lookup_node(
     node_id: str,
     node_type: str,
     repo_root: Optional[Path] = None,
-) -> tuple[str, str, int]:
-    """Look up node name, path, and token estimate."""
+) -> tuple[str, str, int, str]:
+    """Look up node name, path, token estimate, and description.
+
+    Returns (name, path, token_estimate, description).
+    """
     if node_type == "Agent":
         row = conn.execute(
-            "SELECT name, '', 0 FROM agents WHERE agent_id = ?", (node_id,)
+            "SELECT name, '', 0, COALESCE(role, '') FROM agents WHERE agent_id = ?",
+            (node_id,),
         ).fetchone()
     elif node_type == "Skill":
         row = conn.execute(
-            "SELECT name, path, 0 FROM skills WHERE skill_id = ?", (node_id,)
+            "SELECT name, path, 0, COALESCE(description, '') FROM skills WHERE skill_id = ?",
+            (node_id,),
         ).fetchone()
         if row:
             # Estimate tokens from file
             path = row[1]
             token_est = _estimate_tokens_from_path(path, repo_root)
-            return row[0], path, token_est
+            return row[0], path, token_est, row[3]
     elif node_type == "KnowledgeDoc":
         row = conn.execute(
-            "SELECT title, path, token_estimate FROM knowledge_docs WHERE doc_id = ?",
+            "SELECT title, path, token_estimate, COALESCE(content_summary, '') "
+            "FROM knowledge_docs WHERE doc_id = ?",
             (node_id,),
         ).fetchone()
     elif node_type == "DataSource":
         row = conn.execute(
-            "SELECT name, path, 0 FROM data_sources WHERE ds_id = ?", (node_id,)
+            "SELECT name, path, 0, '' FROM data_sources WHERE ds_id = ?", (node_id,)
         ).fetchone()
     elif node_type == "ExternalService":
         row = conn.execute(
-            "SELECT name, '', 0 FROM external_services WHERE svc_id = ?", (node_id,)
+            "SELECT name, '', 0, '' FROM external_services WHERE svc_id = ?", (node_id,)
         ).fetchone()
     else:
         row = None
 
     if row:
-        return row[0], row[1], row[2]
-    return node_id, "", 0
+        return row[0], row[1], row[2], row[3]
+    return node_id, "", 0, ""
 
 
 def _estimate_tokens_from_path(rel_path: str, repo_root: Optional[Path] = None) -> int:
@@ -436,11 +444,14 @@ def assemble_context(
         )
         graph_results.extend(neighbors)
 
-        # Ensure entry node has path info
-        if not node.path:
-            name, path, token_est = _lookup_node(conn, node.node_id, node.node_type, repo_root)
-            node.path = path
-            node.token_estimate = token_est
+        # Ensure entry node has path info and description
+        if not node.path or not node.description:
+            name, path, token_est, desc = _lookup_node(conn, node.node_id, node.node_type, repo_root)
+            if not node.path:
+                node.path = path
+                node.token_estimate = token_est
+            if not node.description and desc:
+                node.description = desc
 
     # Step 3: Hybrid scoring
     all_results = fts_results + direct_nodes
@@ -457,9 +468,11 @@ def assemble_context(
         total_tokens += node_tokens
 
     # Step 5: Fallback — if nothing found, return P0 minimal context
+    is_fallback = False
     if not selected:
         selected = _fallback_context(conn, repo_root)
         total_tokens = sum(n.token_estimate or 200 for n in selected)
+        is_fallback = True
 
     # Step 6: Build result
     files = []
@@ -474,6 +487,9 @@ def assemble_context(
             "score": round(node.score, 3),
             "depth": node.depth,
         }
+        # Include description when available (populated by FTS5 search results)
+        if node.description:
+            chain_entry["description"] = node.description
         if node.path:
             chain_entry["path"] = node.path
             chain_entry["token_estimate"] = node.token_estimate
@@ -513,17 +529,20 @@ def _fallback_context(conn: sqlite3.Connection, repo_root: Optional[Path] = None
     """P0 minimal context: return top agents and most-connected skills."""
     fallback = []
 
-    # All agents
-    for row in conn.execute("SELECT agent_id, name FROM agents LIMIT 5").fetchall():
+    # All agents — include role as description so Level 2 can display it
+    for row in conn.execute(
+        "SELECT agent_id, name, COALESCE(role, '') FROM agents LIMIT 5"
+    ).fetchall():
         fallback.append(ScoredNode(
             node_id=row[0], node_type="Agent", name=row[1],
-            score=0.5, depth=0,
+            score=0.5, depth=0, description=row[2],
         ))
 
-    # Top skills by edge count
+    # Top skills by edge count — include description for Level 2 display
     rows = conn.execute(
         """
-        SELECT s.skill_id, s.name, s.path, COUNT(ar.relation_id) as edge_count
+        SELECT s.skill_id, s.name, s.path, COUNT(ar.relation_id) as edge_count,
+               COALESCE(s.description, '') as description
         FROM skills s
         LEFT JOIN agent_relations ar ON s.skill_id = ar.target_id
         GROUP BY s.skill_id
@@ -536,6 +555,7 @@ def _fallback_context(conn: sqlite3.Connection, repo_root: Optional[Path] = None
         fallback.append(ScoredNode(
             node_id=row[0], node_type="Skill", name=row[1],
             score=0.3, depth=1, path=row[2], token_estimate=token_est,
+            description=row[4],
         ))
 
     return fallback
@@ -554,6 +574,91 @@ def _count_total_tokens(conn: sqlite3.Connection) -> int:
     skill_tokens = skill_count * 500  # Rough estimate
 
     return knowledge_tokens + skill_tokens
+
+
+# --- Progressive Disclosure Output (Level 1/2/3) ---
+
+def format_progressive(result: ContextResult, level: int = 2) -> str:
+    """Format context result using Progressive Disclosure at the specified level.
+
+    Progressive Disclosure levels:
+      Level 1 (Overview)  — ~100 tokens  — IDs and counts only
+      Level 2 (Standard)  — ~400 tokens  — Names, roles, key attributes (default)
+      Level 3 (Full)      — ~2000 tokens — Complete info + all edges + files
+
+    Designed for LLM system prompt injection:
+      - Use Level 1 for "what exists" broad context awareness
+      - Use Level 2 as default system prompt context
+      - Use Level 3 when the LLM needs to act on a specific node
+    """
+    level = max(1, min(3, level))
+    lines = []
+
+    if level == 1:
+        # --- Level 1: Overview --- IDs and counts only
+        lines.append(f"## Agent Context [Overview] query:{result.query!r}")
+        if result.is_fallback:
+            lines.append("*(no direct match — showing default context)*")
+        if result.matched_agents:
+            lines.append(f"agents: [{', '.join(result.matched_agents)}]")
+        if result.matched_skills:
+            truncated = result.matched_skills[:6]
+            suffix = f"  +{len(result.matched_skills)-6} more" if len(result.matched_skills) > 6 else ""
+            lines.append(f"skills: [{', '.join(truncated)}]{suffix}")
+        by_type: dict[str, list[str]] = {}
+        for entry in result.context_chain:
+            t = entry.get("type", "?")
+            by_type.setdefault(t, []).append(entry.get("name", entry.get("node_id", "?")))
+        for t, names in by_type.items():
+            lines.append(f"{t.lower()}: {len(names)} matched")
+        lines.append(f"~{result.estimated_tokens} tokens (savings: {result.savings_vs_full})")
+
+    elif level == 2:
+        # --- Level 2: Standard --- Names, roles, key attributes
+        lines.append(f"## Agent Context [Standard] query:{result.query!r}")
+        if result.is_fallback:
+            lines.append("")
+            lines.append("> No direct match found — showing default workspace context.")
+        lines.append("")
+        if result.matched_agents:
+            lines.append("### Agents")
+            # Build lookup by both node_id and name for robust matching
+            chain_by_id = {e.get("node_id"): e for e in result.context_chain}
+            chain_by_name = {e.get("name"): e for e in result.context_chain}
+            for agent_ref in result.matched_agents:
+                # matched_agents stores .name values; look up by name first
+                entry = chain_by_name.get(agent_ref) or chain_by_id.get(agent_ref)
+                if entry:
+                    name = entry.get("name", agent_ref)
+                    desc = entry.get("description", "")
+                    desc_str = f" — {desc[:60]}" if desc else ""
+                    lines.append(f"- **{name}**{desc_str}")
+                else:
+                    lines.append(f"- **{agent_ref}**")
+        if result.matched_skills:
+            lines.append("")
+            lines.append("### Skills")
+            chain_by_id = {e.get("node_id"): e for e in result.context_chain}
+            for skill_id in result.matched_skills[:8]:
+                entry = chain_by_id.get(skill_id)
+                if entry:
+                    desc = entry.get("description", "")
+                    desc_str = f" — {desc[:60]}" if desc else ""
+                    lines.append(f"- **{skill_id}**{desc_str}")
+                else:
+                    lines.append(f"- **{skill_id}**")
+            if len(result.matched_skills) > 8:
+                lines.append(f"  *(+{len(result.matched_skills)-8} more — use level=3 for full list)*")
+        lines.append("")
+        lines.append(f"~{result.estimated_tokens} tokens | savings: {result.savings_vs_full}")
+
+    else:
+        # --- Level 3: Full --- Complete info + all edges + files (delegates to format_markdown)
+        lines.append(format_markdown(result))
+        lines.append("")
+        lines.append("*(Progressive Disclosure Level 3 — full detail)*")
+
+    return "\n".join(lines)
 
 
 # --- Markdown Output ---
@@ -617,10 +722,13 @@ def main():
                         choices=["bugfix", "feature", "refactor"],
                         help="Task type for scoring adjustment")
     parser.add_argument("--format", type=str, default="json",
-                        choices=["json", "markdown"],
+                        choices=["json", "markdown", "progressive"],
                         help="Output format (default: json)")
     parser.add_argument("--json", action="store_true",
                         help="Shorthand for --format json")
+    parser.add_argument("--level", type=int, default=2,
+                        choices=[1, 2, 3],
+                        help="Progressive Disclosure level: 1=Overview, 2=Standard, 3=Full (default: 2)")
 
     args = parser.parse_args()
 
@@ -662,7 +770,9 @@ def main():
         conn.close()
 
     output_format = "json" if args.json else args.format
-    if output_format == "markdown":
+    if output_format == "progressive":
+        print(format_progressive(result, level=args.level))
+    elif output_format == "markdown":
         print(format_markdown(result))
     else:
         # Convert dataclass to dict
@@ -677,6 +787,8 @@ def main():
             "savings_vs_full": result.savings_vs_full,
             "metadata": result.metadata,
         }
+        if args.level != 2:
+            out["disclosure_level"] = args.level
         print(json.dumps(out, indent=2, ensure_ascii=False))
 
 
