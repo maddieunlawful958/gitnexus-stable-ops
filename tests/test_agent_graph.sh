@@ -519,6 +519,76 @@ test_rt004_code_relation_safe() {
   TESTS_SKIPPED=$((TESTS_SKIPPED + 1))
 }
 
+# FX-001: FTS5 hyphen sanitization — hyphenated query must NOT produce WARNING
+test_fx001_fts5_hyphen_sanitization() {
+  local repo
+  repo=$(create_test_repo)
+  mkdir -p "$repo/SKILL/infra"
+  cat > "$repo/SKILL/infra/agent-context-graph.md" <<'SKILL_EOF'
+---
+name: agent-context-graph
+description: Test hyphenated skill for FTS5 sanitization
+triggers:
+  - agent-context-graph
+---
+# Agent Context Graph
+SKILL_EOF
+  python3 "$BUILDER" build "$repo" --force 2>/dev/null
+  local output
+  output=$(python3 "$RESOLVER" "agent-context-graph" --repo "$repo" --json 2>&1)
+  if [[ "$output" != *"WARNING"* ]]; then
+    echo -e "${GREEN}✓${NC} FX-001: hyphen query produces no WARNING"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+  else
+    echo -e "${RED}✗${NC} FX-001: hyphen query should not produce WARNING"
+    echo "  Got: ${output:0:300}"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+  fi
+  assert_contains "$output" "agent" "FX-001: hyphen query returns non-empty results"
+}
+
+# FX-002: Category inference — root-level SKILL/ files must NOT remain 'unknown'
+test_fx002_category_inference() {
+  local repo
+  repo=$(mktemp -d "$TEST_TEMP_DIR/cat-repo-XXXXXX")
+  mkdir -p "$repo/SKILL" "$repo/.gitnexus"
+  cat > "$repo/SKILL/github-deploy.md" <<'SKILL_EOF'
+---
+name: github-deploy
+description: Deploy via GitHub Actions
+---
+# GitHub Deploy
+SKILL_EOF
+  cat > "$repo/SKILL/telegram-notify.md" <<'SKILL_EOF'
+---
+name: telegram-notify
+description: Send notifications via Telegram
+---
+# Telegram Notify
+SKILL_EOF
+  python3 "$BUILDER" build "$repo" --force 2>/dev/null
+  local db="$repo/.gitnexus/agent-graph.db"
+  local infra_count comm_count unknown_count
+  infra_count=$(python3 -c "
+import sqlite3
+conn = sqlite3.connect('$db')
+print(conn.execute(\"SELECT COUNT(*) FROM skills WHERE category='infra'\").fetchone()[0])
+")
+  comm_count=$(python3 -c "
+import sqlite3
+conn = sqlite3.connect('$db')
+print(conn.execute(\"SELECT COUNT(*) FROM skills WHERE category='communication'\").fetchone()[0])
+")
+  unknown_count=$(python3 -c "
+import sqlite3
+conn = sqlite3.connect('$db')
+print(conn.execute(\"SELECT COUNT(*) FROM skills WHERE category='unknown'\").fetchone()[0])
+")
+  assert_gt "$infra_count" "0" "FX-002: github-deploy inferred as infra"
+  assert_gt "$comm_count" "0" "FX-002: telegram-notify inferred as communication"
+  assert_equals "0" "$unknown_count" "FX-002: no skills remain as unknown"
+}
+
 # --- Run all tests ---
 echo "Running Agent Graph Builder tests..."
 echo "Builder: $BUILDER"
@@ -553,6 +623,8 @@ test_cr004_task_type
 test_cr005_savings
 test_cr006_missing_db
 test_rt004_code_relation_safe
+test_fx001_fts5_hyphen_sanitization
+test_fx002_category_inference
 
 echo
 echo "=========================================="
